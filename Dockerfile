@@ -1,13 +1,14 @@
-FROM alpine
+FROM alpine:latest
 
-MAINTAINER Joe Biellik <contact@jcbiellik.com>
+RUN apk add --no-cache nfs-utils
 
-RUN set -xe \
-	&& apk add --update --no-progress nfs-utils \
-	&& rm -rf /var/cache/apk/*
+ADD https://github.com/just-containers/s6-overlay/releases/download/v1.21.2.1/s6-overlay-amd64.tar.gz /tmp/
+RUN tar xzf /tmp/s6-overlay-amd64.tar.gz -C /
 
-EXPOSE 111/udp 2049/tcp
+COPY s6/config.init /etc/cont-init.d/00-config
+COPY s6/rpcbind.run /etc/services.d/rpcbind/run
+COPY s6/mountd.run /etc/services.d/mountd/run
 
-COPY entrypoint.sh /entrypoint.sh
+EXPOSE 111/udp 2049/tcp 2049/udp
 
-CMD ["/entrypoint.sh"]
+CMD ["/init"]
